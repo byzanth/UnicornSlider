@@ -1,0 +1,347 @@
+/*
+ *      \
+ *       \
+ *        \\
+ *         \\
+ *          >\/7
+ *      _.-(o'  \
+ *     (=___._/` \               jQuery unicornslider v1.0
+ *          )  \ }               @license Open source under the MIT License.
+ *         /   / {               Copyright 2016 Nils Kreutzer
+ *        /    > {               mail: nilskreutzer@hotmail.com
+ *       j    < _ \              web: unicornslider.sagaverse.com
+ *   _.-' :      ``.
+ *   \ r=._\        `.
+ *  <`\\_  \         .`-.
+ *   \ r-7  `-. ._  ' .  `\
+ *    \`,      `-.`7  7)   )
+ *     \/         \|  \'  / }
+ *                ||    .'  {{
+ *                 \\  (     )}}
+ *                  >\  >
+ *               ,.-' >.'
+ *              <.'_.''
+ *               <'
+ */
+
+// break points
+$size1:  481px; // mobile
+$size2:  768px; // tablet
+$size3: 1140px; // desktop
+
+// color definitions
+$white:           #ffffff; // white for contrast
+$black:           #000000; // black for contrast
+$pinkelephant1:   #f586db; // the color cranberry juice with cream
+$pinkelephant2:   #c93de5; // the color of heavy merlot wine
+$earlgrey1:       #564d52; // the color of black tea
+$earlgrey2:       #6c8bde; // the color of bergamotte blossoms
+$earlgrey3:       #333333; // dark grey, to honor the earl
+$lattemacchiato1: #f8f8f8; // the color of milk
+$lattemacchiato2: #724b2a; // the color of espresso
+$lattemacchiato3: #ccb088; // the color of espresso and milk mixed together
+$gargleblaster1:  #768d00; // the color of Qualactin Hypermint extract
+$gargleblaster2:  #102b00; // the color of Fallian marsh gas
+$gargleblaster3:  #ddf51d; // the color of lemon
+
+// color usage
+$default_background_color:                     transparent;
+$default_button_background_color:              $black;
+$default_button_background_color_hover:        $white;
+$pinkelephant_background_color:                $pinkelephant1;
+$pinkelephant_button_background_color:         $pinkelephant2;
+$pinkelephant_button_background_color_hover:   $white;
+$earlgrey_background_color:                    $earlgrey1;
+$earlgrey_button_background_color:             $earlgrey3;
+$earlgrey_button_background_color_hover:       $earlgrey2;
+$lattemacchiato_background_color:              $lattemacchiato1;
+$lattemacchiato_button_background_color:       $lattemacchiato2;
+$lattemacchiato_button_background_color_hover: $lattemacchiato3;
+$gargleblaster_background_color:               $gargleblaster1;
+$gargleblaster_button_background_color:        $gargleblaster2;
+$gargleblaster_button_background_color_hover:  $gargleblaster3;
+
+// image path
+$image_path: "../img/";
+
+// images
+$default_button_background_image:              unquote('url("' + $image_path + 'arrow.svg")');
+$default_button_background_image_hover:        unquote('url("' + $image_path + 'arrow-hover.svg")');
+$pinkelephant_button_background_image:         unquote('url("' + $image_path + 'pinkelephant-arrow.svg")');
+$pinkelephant_button_background_image_hover:   unquote('url("' + $image_path + 'pinkelephant-arrow-hover.svg")');
+$earlgrey_button_background_image:             unquote('url("' + $image_path + 'earlgrey-arrow.svg")');
+$earlgrey_button_background_image_hover:       unquote('url("' + $image_path + 'earlgrey-arrow-hover.svg")');
+$lattemacchiato_button_background_image:       unquote('url("' + $image_path + 'lattemacchiato-arrow.svg")');
+$lattemacchiato_button_background_image_hover: unquote('url("' + $image_path + 'lattemacchiato-arrow-hover.svg")');
+$gargleblaster_button_background_image:        unquote('url("' + $image_path + 'gargleblaster-arrow.svg")');
+$gargleblaster_button_background_image_hover:  unquote('url("' + $image_path + 'gargleblaster-arrow-hover.svg")');
+
+// mixins
+@mixin tablet {
+    @media (min-width: #{$size2}) {
+        @content;
+    }
+}
+@mixin desktop {
+    @media (min-width: #{$size3}) {
+        @content;
+    }
+}
+@mixin transform-scale($scale) {
+    -webkit-transform: scale($scale);
+    -moz-transform:    scale($scale);
+    -ms-transform:     scale($scale);
+    -o-transform:      scale($scale);
+    transform:         scale($scale);
+}
+@mixin transform-rotate($deg) {
+    -webkit-transform: rotate($deg);
+    -moz-transform:    rotate($deg);
+    -ms-transform:     rotate($deg);
+    -o-transform:      rotate($deg);
+    transform:         rotate($deg);
+}
+@mixin transition-duration($duration) {
+    -webkit-transition-duration: $duration;
+    -moz-transition-duration:    $duration;
+    -o-transition-duration:      $duration;
+    transition-duration:         $duration;
+}
+@mixin transition-property($property) {
+    -webkit-transition-property: $property;
+    -moz-transition-property:    $property;
+    -o-transition-property:      $property;
+    transition-property:         $property;
+}
+@mixin transition-timing-function($function) {
+    -webkit-transition-timing-function: $function;
+    -moz-transition-timing-function:    $function;
+    -o-transition-timing-function:      $function;
+    transition-timing-function:         $function; 
+}
+
+// css for the slider
+.unicornslider {
+    position: relative;
+    z-index: 50;
+    background-color: $default_background_color;
+    margin-left: auto;
+    margin-right: auto;
+    @include tablet {
+        padding-bottom: 0px;
+    }
+    .unicornslider-nav {
+        list-style-type: none;
+        margin: 0;
+    }
+    .unicornslider-viewport {
+        position: relative;
+        overflow: hidden;
+        margin: 0px auto;
+    }
+    .unicornslider-wrapper {
+        position: relative;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+    .unicornslider-item {
+        position: absolute;
+        display: block;
+        text-align: center;
+        cursor: pointer;
+        float: left;
+        padding: 0px;
+    }  
+    .unicornslider-nav-next,
+    .unicornslider-nav-prev {
+        position: absolute;
+        height: 100%;
+        margin-top: 0;
+    }
+    .unicornslider-prev,
+    .unicornslider-next {
+        position: absolute;
+        z-index: 666;
+        cursor: pointer;
+        clear: both;
+        display: block;
+        font-size: 20px;
+        line-height: 20px;
+        text-indent: -9999px;
+        overflow: hidden;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 80%;
+        background-color: $default_button_background_color;
+        border-radius: 50%;
+        &:after {
+            content: "";
+            display: block;
+            position: absolute;
+            left: 0;
+            top: 0;
+            z-index: 667;
+            height: 100%;
+            width: 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: transparent;
+            background-image: $default_button_background_image;
+            background-size: contain;
+        }
+        &:hover {
+            background-color: $default_button_background_color_hover;
+            &:after {
+                background-image: $default_button_background_image_hover;
+            }
+        }
+    }
+    &[data-display="vertical"] {
+        width: auto;
+        display: block;
+        padding-top: 50px;
+        padding-bottom: 50px;
+        .unicornslider-nav-next,
+        .unicornslider-nav-prev {
+            width: 100%;
+            left: 0;
+        }
+        .unicornslider-prev:after {
+            @include transform-rotate(90deg);
+        }
+        .unicornslider-next:after {
+            @include transform-rotate(270deg);
+        }
+        .unicornslider-prev,
+        .unicornslider-next {
+            left: 50%;
+            margin-left: -23px;
+            width: 46px;
+            height: 46px;
+            text-align: center;
+        }
+        .unicornslider-nav-prev {
+            top: 0px; 
+        }
+        .unicornslider-nav-next {
+            bottom: 0px; 
+        }
+    }
+    &[data-display="horizontal"] {
+        width: 100%;
+        .unicornslider-nav-next,
+        .unicornslider-nav-prev {
+            height: 100%;
+            top: 0;
+        }
+        .unicornslider-next:after {
+            @include transform-rotate(180deg);
+        }
+        .unicornslider-prev,
+        .unicornslider-next {
+            top: 50%;
+        }
+        .unicornslider-nav-prev {
+            left: 0px; 
+        }
+        .unicornslider-nav-next {
+            right: 0px; 
+        }
+    }
+}
+
+// css transitions
+.unicornslider.csstransitions {
+    .unicornslider-viewport {
+        @include transition-property(unquote("height,width"));
+    } 
+    .unicornslider-item, 
+    .unicornslider-viewport {
+        @include transition-timing-function(ease);
+        @include transition-duration(0s);
+    }
+    &.animating[data-display="vertical"] {
+        .unicornslider-item {
+            @include transition-property(top);
+        }
+    }
+    &.animating[data-display="horizontal"] {
+        .unicornslider-item {
+            @include transition-property(left);
+        }
+    }
+}
+/* predefined styles */
+// pink elephant
+.unicornslider.pinkelephant {
+    background-color: $pinkelephant_background_color;
+    .unicornslider-prev,
+    .unicornslider-next {
+        @include transform-scale(0.8);
+        background-color: $pinkelephant_button_background_color;
+        &:after {
+            background-image: $pinkelephant_button_background_image;
+        }
+        &:hover {
+            background-color: $pinkelephant_button_background_color_hover;
+            &:after {
+                background-image: $pinkelephant_button_background_image_hover;
+            }
+        }
+    }
+}
+// earl grey
+.unicornslider.earlgrey {
+    background-color: $earlgrey_background_color; 
+    .unicornslider-prev,
+    .unicornslider-next {
+        @include transform-scale(0.8);
+        background-color: $earlgrey_button_background_color;
+        &:after {
+            background-image: $earlgrey_button_background_image;
+        }
+        &:hover {
+            background-color: $earlgrey_button_background_color_hover;
+            &:after {
+                background-image: $earlgrey_button_background_image_hover;
+            }
+        }
+    }
+}
+// latte macchiato
+.unicornslider.lattemacchiato {
+    background-color: $lattemacchiato_background_color; 
+    .unicornslider-prev,
+    .unicornslider-next {
+        @include transform-scale(0.8);
+        background-color: $lattemacchiato_button_background_color;
+        &:after {
+            background-image: $lattemacchiato_button_background_image;
+        }
+        &:hover {
+            background-color: $lattemacchiato_button_background_color_hover;
+            &:after {
+                background-image: $lattemacchiato_button_background_image_hover;
+            }
+        }
+    }
+}
+// gargle blaster
+.unicornslider.gargleblaster {
+    background-color: $gargleblaster_background_color; 
+    .unicornslider-prev,
+    .unicornslider-next {
+        border-radius: 0;
+        background-color: $gargleblaster_button_background_color;
+        &:after {
+            background-image: $gargleblaster_button_background_image;
+        }
+        &:hover {
+            background-color: $gargleblaster_button_background_color_hover;
+            &:after {
+                background-image: $gargleblaster_button_background_image_hover;
+            }
+        }
+    }
+}

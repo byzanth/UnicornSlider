@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html class="no-js">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+        <title>jQuery Unicornslider</title>
+
+        <!-- css libs -->
+        <link rel="stylesheet" href="css/style.css" />
+        <link rel="stylesheet" href="css/highlight.default.css" />
+        <link rel="stylesheet" href="css/unicornslider.min.css" />
+
+        <!-- js libs -->
+        <script src="js/modernizr.js"></script>
+        <script src="js/jquery-2.2.0.min.js"></script>
+        <script src="js/jquery.highlight.min.js"></script>
+        <script src="js/jquery.unicornslider.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>UnicornSlider</h1>
+                <h2>The best adaptive slider. With unicorns.</h2>
+                <a class="button red" href="download/unicornslider.zip">Download Unicornslider</a>
+                <h3 class="nav-header">Documentation</h3>
+                <nav>
+                    <ul>
+                        <li><a href="documentation.html">Documentation</a></li>
+                    </ul>
+                </nav>
+                <br>
+                <h3 class="nav-header">Other Examples</h3>
+                <nav>
+                    <ul>
+                        <li class="active"><a href="index.html">Basic Slider</a></li>
+                        <li><a href="basic-slider-vertical.html">Basic Slider vertical</a></li>
+                    </ul>
+                </nav>
+                <br>
+                <form id="styles">
+                    <h3 class="nav-header">Styles</h3>
+                    <select id="styles_select" name="styles" size="1">
+                        <option value="">default</option>
+                        <option value="pinkelephant" selected>Pink Elephant</option>
+                        <option value="earlgrey">Earl Grey</option>
+                        <option value="lattemacchiato">Latte Macciato</option>
+                        <option value="gargleblaster">Gargle Blaster</option>
+                    </select>
+                </form>
+                <br>
+            </div>
+            <div class="main">
+                <div class="unicornslider">
+                    <ul>
+                        <li>
+                            <a class="unicorn-a">
+                                <div class="unicorn1"></div>
+                                <div class="unicorn-label"><span><span>Alex</span></span></div>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="unicorn-a">
+                                <div class="unicorn2"></div>
+                                <div class="unicorn-label"><span><span>Bert</span></span></div>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="unicorn-a">
+                                <div class="unicorn3"></div>
+                                <div class="unicorn-label"><span><span>Chantalle</span></span></div>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="unicorn-a">
+                                <div class="unicorn4"></div>
+                                <div class="unicorn-label"><span><span>Doris</span></span></div>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="unicorn-a">
+                                <div class="unicorn5"></div>
+                                <div class="unicorn-label"><span><span>Etienne</span></span></div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <aside>
+                    <div class="cf">
+                        <h3>Basic Slider</h3>
+                        <ul class="toggle cf">
+                            <li class="active"><a href="#view-js">JS</a></li>
+                            <li><a href="#view-html" class="">HTML</a></li>
+                        </ul>
+                    </div>
+                    <div id="view-js" class="code" style="display: block;">
+                        <pre>
+                            <code class="js">
+$(".unicornslider").unicornslider({
+    visibleItems: 99,
+    style: "pinkelephant"
+});
+                            </code>
+                        </pre>
+                    </div>
+                    <div id="view-html" class="code" style="display: none;">
+                        <pre>
+                            <code class="html">
+&#x3C;div class=&#x22;unicornslider&#x22;&#x3E;
+    &#x3C;ul&#x3E;
+        &#x3C;li&#x3E;
+            ...
+        &#x3C;/li&#x3E;
+        &#x3C;li&#x3E;
+            ...
+        &#x3C;/li&#x3E;
+        &#x3C;li&#x3E;
+            ...
+        &#x3C;/li&#x3E;
+    &#x3C;/ul&#x3E;
+&#x3C;/div&#x3E;
+                            </code>
+                        </pre>
+                    </div>
+                </aside>
+            </div>
+        </div>
+        <script>
+            $(document).ready(function () {
+                // init unicornslider
+                $(".unicornslider").unicornslider({
+                    visibleItems: 99,
+                    style: "pinkelephant",
+                    debug: true
+                });
+                // event handlers
+                $("#styles_select").on("change", function () {
+                    // get value
+                    var newStyle = $(this).val();
+                    // set new style to unicornslider
+                    $(".unicornslider").removeClass("pinkelephant earlgrey lattemacchiato gargleblaster").addClass(newStyle);
+                });
+                $(".toggle a").click(function(event) {
+                    var href = $(event.target).closest("a[href]").attr("href");
+                    $(".toggle li").removeClass("active");
+                    $(event.target).closest("li").addClass("active");
+                    $("#view-html, #view-js").hide();
+                    $(href).show();
+                });
+            });
+        </script>
+        <script>hljs.initHighlightingOnLoad();</script>
+    </body>
+</html>
