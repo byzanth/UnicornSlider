@@ -40,7 +40,7 @@
         $.data(element, "unicornslider", slider);
 
         // private slider methods
-        var methods = {
+        methods = {
             init: function () { // init unicornslider
                 // private vars
                 slider.oldHtml;                                 // Object: Save old html here
