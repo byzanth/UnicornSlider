@@ -1,0 +1,26 @@
+# unicornslider 1.0
+An awesome, fully adaptive jQuery slider plugin 
+
+## Features
+- adaptive slider perfectly suited for menus
+- 5 predefined styles
+- powered by unicorns
+
+## Requirements
+UnicornSlider requires jQuery 1.7 or higher to work
+
+## Releases
+The `master` branch of this repository is always the latest development version of UnicornSlider. Please view the [Releases](https://github.com/byzanth/UnicornSlider/releases) section for a list of official UnicornSlider builds.
+
+## Updates
+
+** Version 1.0 **
+- Initial Release
+
+## General Notes
+UnicornSlider is open source under the MIT License
+
+## Examples
+[Basic Slider](http://unicornslider.sagaverse.com/index.html)
+[Vertical Slider](http://unicornslider.sagaverse.com/basic-slider-vertical.html)
+[Documentation](http://unicornslider.sagaverse.com/documentation.html)
