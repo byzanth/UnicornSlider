@@ -49,6 +49,12 @@ module.exports = function (grunt) {
                         cwd: '',
                         src: ['jquery.unicornslider.min.js'],
                         dest: 'demo/js/'
+                    },
+                    {
+                        expand: true,
+                        cwd: '',
+                        src: ['jquery.unicornslider.js'],
+                        dest: 'demo/js/'
                     }]
             }
         }

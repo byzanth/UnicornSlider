@@ -256,7 +256,7 @@ $gargleblaster_button_background_image_hover:  unquote('url("' + $image_path + '
     .unicornslider-viewport {
         @include transition-property(unquote("height,width"));
     } 
-    .unicornslider-item, 
+    .unicornslider-item,
     .unicornslider-viewport {
         @include transition-timing-function(ease);
         @include transition-duration(0s);
@@ -271,7 +271,18 @@ $gargleblaster_button_background_image_hover:  unquote('url("' + $image_path + '
             @include transition-property(left);
         }
     }
+    &.touchevents {
+        .unicornslider-wrapper {
+            @include transition-timing-function(ease);
+            @include transition-duration(0s);
+        }
+        .unicornslider-wrapper {
+            @include transition-property(unquote("margin-top,margin-left"));
+        }
+    }
 }
+
+
 /* predefined styles */
 // pink elephant
 .unicornslider.pinkelephant {

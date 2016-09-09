@@ -49,6 +49,7 @@
                 slider.animating = false;                       // Boolean: Animation state
                 slider.wrapAround = slider.vars.wrapAround;     // Boolean: Wrap around state
                 slider.leanWrapper = slider.vars.leanWrapper;   // Boolean: Lean wrapper
+                slider.touchEnabled = false;                    // Boolean: Enable touch
 
                 slider.defaultEasing = "swing";                 // String: Fallback jQuery easing function; possible values: "swing" or "linear"
                 slider.direction = "next";                      // String: Direction of slider animation; possible values: "next" or "prev"  
@@ -75,7 +76,8 @@
                 slider.buttonWidth = slider.vars.buttonWidth;   // Integer: Width of button element
                 slider.mm = {
                     swipeTreshold: 100,
-                    allowedTime: 300
+                    allowedTime: 300,
+                    dragging: false
                 };
                 // setup html
                 methods.setup();
@@ -115,25 +117,27 @@
                 return slider.find("." + namespace + "item.clone");
             },
             createClones: function () {
-                $(item.get().reverse()).each(function (index) {
-                    if (slider.vars.orientation === "vertical") {
-                        var cloneDisplacement = parseInt($(this).css("top"), 10); // get displacement top
-                        $(this).clone().css("top", cloneDisplacement - slider.wrapperHeight).addClass("clone").prependTo($("." + namespace + "wrapper", slider)); // prepend clone
-                    } else {
-                        var cloneDisplacement = parseInt($(this).css("left"), 10); // get displacement left
-                        $(this).clone().css("left", cloneDisplacement - slider.wrapperWidth).addClass("clone").prependTo($("." + namespace + "wrapper", slider)); // prepend clone
-                    }
-                });
-                item.each(function (index) {
-                    if (slider.vars.orientation === "vertical") {
-                        var cloneDisplacement = parseInt($(this).css("top"), 10); // get displacement top
-                        $(this).clone().css("top", cloneDisplacement + slider.wrapperHeight).addClass("clone").appendTo($("." + namespace + "wrapper", slider)); // append clone
-                    } else {
-                        var cloneDisplacement = parseInt($(this).css("left"), 10); // get displacement left
-                        $(this).clone().css("left", cloneDisplacement + slider.wrapperWidth).addClass("clone").appendTo($("." + namespace + "wrapper", slider)); // append clone
-                    }
-                });
-                slider.cleanup = true;
+                if (slider.cleanup === false) { // clones allready exist
+                    $(item.get().reverse()).each(function (index) {
+                        if (slider.vars.orientation === "vertical") {
+                            var cloneDisplacement = parseInt($(this).css("top"), 10); // get displacement top
+                            $(this).clone().css("top", cloneDisplacement - slider.wrapperHeight).addClass("clone").prependTo($("." + namespace + "wrapper", slider)); // prepend clone
+                        } else {
+                            var cloneDisplacement = parseInt($(this).css("left"), 10); // get displacement left
+                            $(this).clone().css("left", cloneDisplacement - slider.wrapperWidth).addClass("clone").prependTo($("." + namespace + "wrapper", slider)); // prepend clone
+                        }
+                    });
+                    item.each(function (index) {
+                        if (slider.vars.orientation === "vertical") {
+                            var cloneDisplacement = parseInt($(this).css("top"), 10); // get displacement top
+                            $(this).clone().css("top", cloneDisplacement + slider.wrapperHeight).addClass("clone").appendTo($("." + namespace + "wrapper", slider)); // append clone
+                        } else {
+                            var cloneDisplacement = parseInt($(this).css("left"), 10); // get displacement left
+                            $(this).clone().css("left", cloneDisplacement + slider.wrapperWidth).addClass("clone").appendTo($("." + namespace + "wrapper", slider)); // append clone
+                        }
+                    });
+                    slider.cleanup = true;
+                }
             },
             killClones: function () {
                 wrapper.find("." + namespace + "item.clone").remove();
@@ -185,6 +189,9 @@
                     methods.replaceVisibleClones();
                     // kill all clones
                     methods.killClones();
+                    if (slider.animationMethod === "css") {
+                        wrapper.css("-webkit-transition-duration", "").css("-moz-transition-duration", "").css("-o-transition-duration", "").css("transition-duration", "");
+                    }
                     // log: UnicornSlider animation ended  
                     methods.log("unicornslider animation ended");
                     // UnicornSlider: animationEnd() Callback
@@ -230,6 +237,9 @@
             },
             animateToTarget: function (target) {
                 // animate
+                if((slider.mm.dragging === true)&&(methods.isInt(target))) { // do not interfere with dragging
+                    return true;
+                }
                 if (slider.animating === true) { // do not interfere with animation!
                     return true;
                 }
@@ -446,7 +456,7 @@
                 // reset displacement values
                 slider.centerActiveDisplacementIndex = 0;
                 slider.centerActiveDisplacement = 0;
-                // center active item displacement    
+                // center active item displacement
                 if (!methods.isOdd(slider.itemsVisible)) { // at this point, itemsVisible is odd
                     return false; // something went horribly wrong...
                 }
@@ -603,6 +613,16 @@
                         slider.animationMethod = "css"; // use css transitions
                     }
                 }
+                // checking touch support
+                if (typeof Modernizr !== "undefined") { // Modernizr is used
+                    if (Modernizr.touchevents === true) { // touch events are supported
+                        slider.touchEnabled = true; // use touch events
+                    }
+                } else { // use own method of detecting if browser is ready for touch events
+                    if (methods.supportsTouchEvents()) {
+                        slider.touchEnabled = true; // use touch events
+                    }
+                }
                 // checking wrap around value
                 if ((slider.vars.wrapAround !== true) && (slider.vars.wrapAround !== false)) {
                     slider.wrapAround = true;
@@ -619,9 +639,9 @@
             unregisterEventHandlers: function () {
                 // unregister all eventHandlers
                 slider.off("keydown", methods.keydownHandler);
-                next.off("click touchstart touchend", methods.next);
-                prev.off("click touchstart touchend", methods.prev);
-                item.off("click touchstart touchend", methods.activate);
+                next.off("click touchend", methods.next);
+                prev.off("click touchend", methods.prev);
+                item.off("click touchend", methods.activate);
                 viewport.off("touchstart", methods.touchStart);
                 viewport.off("touchmove", methods.touchMove);
                 viewport.off("touchend", methods.touchEnd);
@@ -631,16 +651,27 @@
                 // arrow keys for accessibility
                 slider.on("keydown", methods.keydownHandler);
                 // next and prev buttons
-                next.on("click touchstart touchend", methods.next);
-                prev.on("click touchstart touchend", methods.prev);
+                next.on("click touchend", methods.next);
+                prev.on("click touchend", methods.prev);
                 // active item centering
                 item.on("click touchstart touchend", methods.activate);
                 // touch events
-                viewport.on("touchstart", methods.touchStart);
-                viewport.on("touchmove", methods.touchMove);
-                viewport.on("touchend", methods.touchEnd);
+                if (slider.touchEnabled === true) {
+                    viewport.on("touchstart", methods.touchStart);
+                    viewport.on("touchmove", methods.touchMove);
+                    viewport.on("touchend", methods.touchEnd);
+                }
                 // resize events
                 $(window).on("resize orientationchange focus", methods.resize);
+            },
+            supportsTouchEvents: function() {
+                // source: http://stackoverflow.com/questions/4817029/whats-the-best-way-to-detect-a-touch-screen-device-using-javascript/4819886#4819886
+                try {
+                    document.createEvent("TouchEvent");
+                    return true;
+                } catch (event) {
+                    return false;
+                }
             },
             supportsTransitions: function () {
                 // source: http://stackoverflow.com/questions/7264899/detect-css-transitions-using-javascript-and-without-modernizr
@@ -758,53 +789,124 @@
                 return (typeof value === 'number') && (value % 1 === 0);
             },
             touchStart: function (event) {
-                if (event.originalEvent.touches === undefined) {
+                /*if (event.originalEvent.touches === undefined) {
                     var touch = event;
                 } else {
                     var touch = event.originalEvent.touches[0] || event.originalEvent.changedTouches[0];
                 }
-                slider.mm.ox = touch.pageX;
-                slider.mm.oy = touch.pageY;
+                slider.mm.startX = touch.pageX;
+                slider.mm.startY = touch.pageY;
                 slider.mm.startTime = new Date().getTime();
+                slider.mm.dragging = true;
+                // create clones
+                methods.createClones();
+                // disable css animation for wrapper
+                if(slider.animationMethod === "css") {
+                    wrapper.css("-webkit-transition-duration", "").css("-moz-transition-duration", "").css("-o-transition-duration", "").css("transition-duration", "");
+                }
+                event.preventDefault();*/
             },
             touchMove: function (event) {
-            },
-            touchEnd: function (event) {
+                /*
                 if (event.originalEvent.touches === undefined) {
                     var touch = event;
                 } else {
                     var touch = event.originalEvent.touches[0] || event.originalEvent.changedTouches[0];
                 }
-                slider.mm.dx = touch.pageX - slider.mm.ox;
-                slider.mm.dy = touch.pageY - slider.mm.oy;
+                slider.mm.moveX = touch.pageX;
+                slider.mm.moveY = touch.pageY;
+                slider.mm.moveTime = new Date().getTime();
+                // precalculate displacement
+                var calcY = slider.mm.moveY - slider.mm.startY;
+                var calcX = slider.mm.moveX - slider.mm.startX;
+                // keep in bounding
+                if ((calcY > 0) && (calcY > slider.wrapperHeight)) {
+                    calcY = slider.wrapperHeight;
+                }
+                if ((calcY < 0) && (calcY < -slider.wrapperHeight)) {
+                    calcY = 0 - slider.wrapperHeight;
+                }
+                if ((calcX > 0) && (calcX > slider.wrapperWidth)) {
+                    calcX = slider.wrapperWidth;
+                    console.log("calcX: " + calcX + ", wrapper: " + slider.wrapperWidth);
+                }
+                if ((calcX < 0) && (calcX < -slider.wrapperWidth)) {
+                    calcX = 0 - slider.wrapperWidth;
+                    console.log("calcX: " + calcX + ", wrapper: " + slider.wrapperWidth);
+                }
+                // displace wrapper here
+                if (slider.vars.orientation === "vertical") { // displace vertical
+                    wrapper.css("margin-top", calcY );
+                } else { // displace horizontal
+                    wrapper.css("margin-left", calcX );
+                }
+                event.preventDefault();*/
+            },
+            touchEnd: function (event) {
+                /*slider.mm.dragging = false;
+                if (event.originalEvent.touches === undefined) {
+                    var touch = event;
+                } else {
+                    var touch = event.originalEvent.touches[0] || event.originalEvent.changedTouches[0];
+                }
+                slider.mm.endX = touch.pageX - slider.mm.startX;
+                slider.mm.endY = touch.pageY - slider.mm.startY;
                 slider.mm.endTime = new Date().getTime() - slider.mm.startTime;
-
+                // enable css animtion of wrapper
+                if ((slider.vars.speed !== 0) && (slider.animationMethod === "css") && (slider.touchEnabled === true)) {
+                    wrapper.css("-webkit-transition-duration", (parseInt(slider.vars.speed) / 1000) + "s").css("-moz-transition-duration", (parseInt(slider.vars.speed) / 1000) + "s").css("-o-transition-duration", (parseInt(slider.vars.speed) / 1000) + "s").css("transition-duration", (parseInt(slider.vars.speed) / 1000) + "s");
+                }
+                // animate items
+                if (slider.animationMethod === "css") { // use css transitions
+                    if (slider.vars.orientation === "vertical") {
+                        wrapper.css("margin-top", 0); // set new value for margin-top
+                    } else {
+                        wrapper.css("margin-left", 0); // set new value for margin-left
+                    }
+                    setTimeout(function () {
+                        methods.cleanUp();
+                    }, slider.vars.speed);
+                } else { // use jQuery animation
+                    if (slider.vars.orientation === "vertical") {
+                        wrapper.animate({"margin-top": 0}, slider.vars.speed, slider.vars.easing, function () {
+                            methods.cleanUp();
+                        }); // animate wrapper
+                    } else {
+                        wrapper.animate({"margin-left": 0}, slider.vars.speed, slider.vars.easing, function () {
+                            methods.cleanUp();
+                        }); // animate wrapper
+                    }
+                }
+                
+                // calculate threshold to animate to item
                 if (slider.vars.orientation === "vertical") {
-                    if (slider.mm.dy < -slider.mm.swipeTreshold && slider.mm.endTime < slider.mm.allowedTime) {
+                    if (slider.mm.endY < -slider.mm.swipeTreshold && slider.mm.endTime < slider.mm.allowedTime) {
                         // can scroll forth on swipe only if startFrom < num_items
                         if (slider.itemsVisible + slider.current < item.length) {
                             methods.next();
                         }
                     }
-                    else if (slider.mm.dy > slider.mm.swipeTreshold && slider.mm.endTime < slider.mm.allowedTime) {
+                    else if (slider.mm.endY > slider.mm.swipeTreshold && slider.mm.endTime < slider.mm.allowedTime) {
                         // can scroll back on swipe only if startFrom > 0
                         if (slider.itemsVisible > 0) {
                             methods.prev();
                         }
                     }
                 } else {
-                    if (slider.mm.dx < -slider.mm.swipeTreshold && slider.mm.endTime < slider.mm.allowedTime) {
+                    
+                    if (slider.mm.endX < -slider.mm.swipeTreshold && slider.mm.endTime < slider.mm.allowedTime) {
                         // can scroll forth on swipe only if startFrom < num_items
                         if (slider.itemsVisible + slider.current < item.length) {
                             methods.next();
                         }
-                    } else if (slider.mm.dx > slider.mm.swipeTreshold && slider.mm.endTime < slider.mm.allowedTime) {
+                    } else if (slider.mm.endX > slider.mm.swipeTreshold && slider.mm.endTime < slider.mm.allowedTime) {
                         // can scroll back on swipe only if startFrom > 0
                         if (slider.current > 0) {
                             methods.prev();
                         }
                     }
                 }
+                event.preventDefault();*/
             },
             setup: function () {
                 // save clone in var
