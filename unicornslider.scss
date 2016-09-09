@@ -5,7 +5,7 @@
  *         \\
  *          >\/7
  *      _.-(o'  \
- *     (=___._/` \               jQuery unicornslider v1.0
+ *     (=___._/` \               jQuery unicornslider v1.0.0
  *          )  \ }               @license Open source under the MIT License.
  *         /   / {               Copyright 2016 Nils Kreutzer
  *        /    > {               mail: nilskreutzer@hotmail.com

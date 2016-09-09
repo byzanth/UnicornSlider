@@ -167,7 +167,7 @@ code:before {
     letter-spacing: -0.2em;
     content: "\00a0";
 }
-code: after {
+code:after {
     letter-spacing: -0.2em;
     content: "\00a0";
 }
@@ -250,9 +250,21 @@ code: after {
     -moz-transform: translateY(30px);
     -ms-transform: translateY(30px);
     -o-transform: translateY(30px);
-    transform: translateY(30px);
-    -webkit-animation: fadeIn .7s ease-in forwards;
-    animation: fadeIn .7s ease-in forwards;
+    transform: translateY(30px);    
+    -webkit-animation-name: fadeIn;
+    -webkit-animation-duration: 0.7s;
+    -webkit-animation-timing-function: ease-in;
+    -webkit-animation-fill-mode: forwards;
+    -moz-animation-name: fadeIn;
+    -moz-animation-duration: 0.7s;
+    -moz-animation-timing-function: ease-in;
+    -o-animation-name: fadeIn;
+    -o-animation-duration: 0.7s;
+    -o-animation-timing-function: ease-in;
+    animation-name: fadeIn;
+    animation-duration: 0.7s;
+    animation-timing-function: ease-in;
+    animation-fill-mode: forwards;
     z-index: 20;
 }
 .unicorn-label span {

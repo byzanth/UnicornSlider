@@ -1,0 +1,31 @@
+{
+  "name": "UnicornSlider",
+  "version": "1.0.0",
+  "description": "An awesome, fully adaptive jQuery slider plugin",
+  "main": "jquery.unicornslider.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/byzanth/UnicornSlider.git"
+  },
+  "keywords": [
+    "unicornslider",
+    "jquery",
+    "slider"
+  ],
+  "author": "Nils Kreutzer <nilkreutzer@hotmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/byzanth/UnicornSlider/issues"
+  },
+  "homepage": "https://github.com/byzanth/UnicornSlider#readme",
+  "dependencies": {
+    "jquery": ">=1.7"
+  },
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-contrib-copy": "^1.0.0"
+  }
+}
