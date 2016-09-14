@@ -77,7 +77,8 @@
                 slider.mm = {
                     swipeTreshold: 100,
                     allowedTime: 300,
-                    dragging: false
+                    dragging: false,
+                    wasDragged: false
                 };
                 // setup html
                 methods.setup();
@@ -180,6 +181,7 @@
                 }
                 // set timeout to be sure animation is complete
                 setTimeout(function () {
+                    slider.mm.savedTarget = '';
                     slider.animating = false;
                     slider.removeClass("animating");
                     if (slider.animationMethod === "css") {
@@ -192,6 +194,7 @@
                     if (slider.animationMethod === "css") {
                         wrapper.css("-webkit-transition-duration", "").css("-moz-transition-duration", "").css("-o-transition-duration", "").css("transition-duration", "");
                     }
+                    slider.mm.wasDragged = false;
                     // log: UnicornSlider animation ended  
                     methods.log("unicornslider animation ended");
                     // UnicornSlider: animationEnd() Callback
@@ -237,7 +240,7 @@
             },
             animateToTarget: function (target) {
                 // animate
-                if((slider.mm.dragging === true)&&(methods.isInt(target))) { // do not interfere with dragging
+                if ((slider.mm.dragging === true) && (methods.isInt(target))) { // do not interfere with dragging
                     return true;
                 }
                 if (slider.animating === true) { // do not interfere with animation!
@@ -278,20 +281,20 @@
                             var top = parseInt($(this).css("top"), 10);
                             var newTop = top + slider.displacement;
                             $(this).css("top", newTop); // set new value for top
-                            setTimeout(function () {
-                                methods.cleanUp();
-                            }, slider.vars.speed);
                         });
+                        setTimeout(function () {
+                            methods.cleanUp();
+                        }, slider.vars.speed);
                     } else {
                         viewport.css("width", slider.viewportWidth); // set new value for height
                         allItems.each(function (index) {
                             var left = parseInt($(this).css("left"), 10);
                             var newLeft = left + slider.displacement;
                             $(this).css("left", newLeft); // set new value for top
-                            setTimeout(function () {
-                                methods.cleanUp();
-                            }, slider.vars.speed);
                         });
+                        setTimeout(function () {
+                            methods.cleanUp();
+                        }, slider.vars.speed);
                     }
                 } else {
                     // use jQuery animations
@@ -639,9 +642,9 @@
             unregisterEventHandlers: function () {
                 // unregister all eventHandlers
                 slider.off("keydown", methods.keydownHandler);
-                next.off("click touchend", methods.next);
-                prev.off("click touchend", methods.prev);
-                item.off("click touchend", methods.activate);
+                next.off("click", methods.next);
+                prev.off("click", methods.prev);
+                item.off("click touchstart", methods.activate);
                 viewport.off("touchstart", methods.touchStart);
                 viewport.off("touchmove", methods.touchMove);
                 viewport.off("touchend", methods.touchEnd);
@@ -651,8 +654,8 @@
                 // arrow keys for accessibility
                 slider.on("keydown", methods.keydownHandler);
                 // next and prev buttons
-                next.on("click touchend", methods.next);
-                prev.on("click touchend", methods.prev);
+                next.on("click", methods.next);
+                prev.on("click", methods.prev);
                 // active item centering
                 item.on("click touchstart touchend", methods.activate);
                 // touch events
@@ -724,13 +727,17 @@
                 }
             },
             next: function (event) {
-                event.preventDefault();
+                if(typeof event !== 'undefined') {
+                    event.preventDefault();
+                }
                 slider.vars.button(slider); // button() Callback
                 methods.animateToTarget("next");
                 methods.log("unicornslider animate to next");
             },
             prev: function (event) {
-                event.preventDefault();
+                if(typeof event !== 'undefined') {
+                    event.preventDefault();
+                }
                 slider.vars.button(slider); // button() Callback
                 methods.animateToTarget("prev");
                 methods.log("unicornslider animate to prev");
@@ -762,11 +769,13 @@
                 } else if (methods.isInt(target)) { // animate to target
                     // do some sanitizing stuff  
                     if ((target >= 0) && (target < item.length)) { // is target valid?
-                        var delta = methods.calculateMinimalDelta(target);
-                        if (((0 > (slider.current - delta)) && (2 * delta < item.length) && (slider.current + delta !== target) && (target > slider.current)) || ((target < slider.current) && (0 <= slider.current - delta) && (slider.current - delta === target))) {
-                            slider.direction = "prev";
-                        } else {
-                            slider.direction = "next";
+                        if (slider.mm.wasDragged === false) {
+                            var delta = methods.calculateMinimalDelta(target);
+                            if (((0 > (slider.current - delta)) && (2 * delta < item.length) && (slider.current + delta !== target) && (target > slider.current)) || ((target < slider.current) && (0 <= slider.current - delta) && (slider.current - delta === target))) {
+                                slider.direction = "prev";
+                            } else {
+                                slider.direction = "next";
+                            }
                         }
                         return target;
                     } else { // target is no valid int, do some calculation to get some sense in that target
@@ -774,10 +783,12 @@
                         if (target < 0) {
                             target = item.length - target;
                         }
-                        if (target < slider.current) {
-                            slider.direction = "prev";
-                        } else {
-                            slider.direction = "next";
+                        if (slider.mm.wasDragged === false) {
+                            if (target < slider.current) {
+                                slider.direction = "prev";
+                            } else {
+                                slider.direction = "next";
+                            }
                         }
                         return target;
                     }
@@ -789,30 +800,40 @@
                 return (typeof value === 'number') && (value % 1 === 0);
             },
             touchStart: function (event) {
-                /*if (event.originalEvent.touches === undefined) {
+                if(slider.animating === true) {
+                    return true;
+                }
+                if (event.originalEvent.touches === undefined) {
                     var touch = event;
                 } else {
                     var touch = event.originalEvent.touches[0] || event.originalEvent.changedTouches[0];
                 }
+                event.preventDefault();
                 slider.mm.startX = touch.pageX;
                 slider.mm.startY = touch.pageY;
                 slider.mm.startTime = new Date().getTime();
                 slider.mm.dragging = true;
+                if (slider.animationMethod === "css") {
+                    // set animation duration
+                    item.css("-webkit-transition-duration", (parseInt(slider.vars.speed) / 1000) + "s").css("-moz-transition-duration", (parseInt(slider.vars.speed) / 1000) + "s").css("-o-transition-duration", (parseInt(slider.vars.speed) / 1000) + "s").css("transition-duration", (parseInt(slider.vars.speed) / 1000) + "s");
+                }
                 // create clones
                 methods.createClones();
                 // disable css animation for wrapper
                 if(slider.animationMethod === "css") {
                     wrapper.css("-webkit-transition-duration", "").css("-moz-transition-duration", "").css("-o-transition-duration", "").css("transition-duration", "");
                 }
-                event.preventDefault();*/
             },
             touchMove: function (event) {
-                /*
+                if(slider.animating === true) {
+                    return true;
+                }
                 if (event.originalEvent.touches === undefined) {
                     var touch = event;
                 } else {
                     var touch = event.originalEvent.touches[0] || event.originalEvent.changedTouches[0];
                 }
+                event.preventDefault();
                 slider.mm.moveX = touch.pageX;
                 slider.mm.moveY = touch.pageY;
                 slider.mm.moveTime = new Date().getTime();
@@ -820,19 +841,17 @@
                 var calcY = slider.mm.moveY - slider.mm.startY;
                 var calcX = slider.mm.moveX - slider.mm.startX;
                 // keep in bounding
-                if ((calcY > 0) && (calcY > slider.wrapperHeight)) {
-                    calcY = slider.wrapperHeight;
+                if ((calcY > 0) && (calcY > Math.round(slider.wrapperHeight / 2))) {
+                    calcY = Math.round(slider.wrapperHeight / 2);
                 }
-                if ((calcY < 0) && (calcY < -slider.wrapperHeight)) {
-                    calcY = 0 - slider.wrapperHeight;
+                if ((calcY < 0) && (calcY < - Math.round(slider.wrapperHeight))) {
+                    calcY = 0 - Math.round(slider.wrapperHeight / 2);
                 }
-                if ((calcX > 0) && (calcX > slider.wrapperWidth)) {
-                    calcX = slider.wrapperWidth;
-                    console.log("calcX: " + calcX + ", wrapper: " + slider.wrapperWidth);
+                if ((calcX > 0) && (calcX > Math.round(slider.wrapperWidth / 2))) {
+                    calcX = Math.round(slider.wrapperWidth / 2);
                 }
-                if ((calcX < 0) && (calcX < -slider.wrapperWidth)) {
-                    calcX = 0 - slider.wrapperWidth;
-                    console.log("calcX: " + calcX + ", wrapper: " + slider.wrapperWidth);
+                if ((calcX < 0) && (calcX < - Math.round(slider.wrapperWidth / 2))) {
+                    calcX = 0 - Math.round(slider.wrapperWidth / 2);
                 }
                 // displace wrapper here
                 if (slider.vars.orientation === "vertical") { // displace vertical
@@ -840,73 +859,67 @@
                 } else { // displace horizontal
                     wrapper.css("margin-left", calcX );
                 }
-                event.preventDefault();*/
             },
             touchEnd: function (event) {
-                /*slider.mm.dragging = false;
+                if(slider.animating === true) {
+                    return true;
+                }
                 if (event.originalEvent.touches === undefined) {
                     var touch = event;
                 } else {
                     var touch = event.originalEvent.touches[0] || event.originalEvent.changedTouches[0];
                 }
+                event.preventDefault();
                 slider.mm.endX = touch.pageX - slider.mm.startX;
                 slider.mm.endY = touch.pageY - slider.mm.startY;
                 slider.mm.endTime = new Date().getTime() - slider.mm.startTime;
+                slider.mm.wasDragged = true;
+                slider.mm.dragging = false;
                 // enable css animtion of wrapper
                 if ((slider.vars.speed !== 0) && (slider.animationMethod === "css") && (slider.touchEnabled === true)) {
                     wrapper.css("-webkit-transition-duration", (parseInt(slider.vars.speed) / 1000) + "s").css("-moz-transition-duration", (parseInt(slider.vars.speed) / 1000) + "s").css("-o-transition-duration", (parseInt(slider.vars.speed) / 1000) + "s").css("transition-duration", (parseInt(slider.vars.speed) / 1000) + "s");
                 }
-                // animate items
+                // animate wrapper
                 if (slider.animationMethod === "css") { // use css transitions
                     if (slider.vars.orientation === "vertical") {
                         wrapper.css("margin-top", 0); // set new value for margin-top
                     } else {
                         wrapper.css("margin-left", 0); // set new value for margin-left
                     }
-                    setTimeout(function () {
-                        methods.cleanUp();
-                    }, slider.vars.speed);
                 } else { // use jQuery animation
                     if (slider.vars.orientation === "vertical") {
-                        wrapper.animate({"margin-top": 0}, slider.vars.speed, slider.vars.easing, function () {
-                            methods.cleanUp();
-                        }); // animate wrapper
+                        wrapper.animate({"margin-top": 0}, slider.vars.speed, slider.vars.easing, function () {}); // animate wrapper
                     } else {
-                        wrapper.animate({"margin-left": 0}, slider.vars.speed, slider.vars.easing, function () {
-                            methods.cleanUp();
-                        }); // animate wrapper
+                        wrapper.animate({"margin-left": 0}, slider.vars.speed, slider.vars.easing, function () {}); // animate wrapper
                     }
                 }
-                
-                // calculate threshold to animate to item
-                if (slider.vars.orientation === "vertical") {
-                    if (slider.mm.endY < -slider.mm.swipeTreshold && slider.mm.endTime < slider.mm.allowedTime) {
-                        // can scroll forth on swipe only if startFrom < num_items
-                        if (slider.itemsVisible + slider.current < item.length) {
-                            methods.next();
+                if (slider.mm.endTime > slider.mm.allowedTime) {
+                    // calculate threshold to animate to item
+                    if (slider.vars.orientation === "vertical") {
+                        var numberOfItems = Math.round(Math.abs(slider.mm.endY) / slider.activeItemHeight);
+                        if (slider.mm.endY < -slider.mm.swipeTreshold) {
+                            slider.direction = "next";
+                            methods.animateToTarget(slider.current + numberOfItems);
                         }
-                    }
-                    else if (slider.mm.endY > slider.mm.swipeTreshold && slider.mm.endTime < slider.mm.allowedTime) {
-                        // can scroll back on swipe only if startFrom > 0
-                        if (slider.itemsVisible > 0) {
-                            methods.prev();
+                        else if (slider.mm.endY > slider.mm.swipeTreshold) {
+                            slider.direction = "prev";
+                            methods.animateToTarget(slider.current - numberOfItems);
+                        }
+                    } else {
+                        var numberOfItems = Math.round(Math.abs(slider.mm.endX) / slider.activeItemWidth);
+                        if (slider.mm.endX < -slider.mm.swipeTreshold) {
+                            slider.direction = "next";
+                            methods.animateToTarget(slider.current + numberOfItems);
+                        } else if (slider.mm.endX > slider.mm.swipeTreshold) {
+                            slider.direction = "prev";
+                            methods.animateToTarget(slider.current - numberOfItems);
                         }
                     }
                 } else {
-                    
-                    if (slider.mm.endX < -slider.mm.swipeTreshold && slider.mm.endTime < slider.mm.allowedTime) {
-                        // can scroll forth on swipe only if startFrom < num_items
-                        if (slider.itemsVisible + slider.current < item.length) {
-                            methods.next();
-                        }
-                    } else if (slider.mm.endX > slider.mm.swipeTreshold && slider.mm.endTime < slider.mm.allowedTime) {
-                        // can scroll back on swipe only if startFrom > 0
-                        if (slider.current > 0) {
-                            methods.prev();
-                        }
+                    if (slider.mm.savedTarget !== '') {
+                        methods.animateToTarget(slider.mm.savedTarget);
                     }
                 }
-                event.preventDefault();*/
             },
             setup: function () {
                 // save clone in var
@@ -957,6 +970,10 @@
                 }
                 if ((slider.centerActive === "off") || (slider.mode === "mobile" && slider.centerActive === "desktop") || (slider.mode === "desktop" && slider.centerActive === "mobile")) { // if centerActive is disabled: return
                     return true;
+                }
+                if (slider.touchEnabled === true) {
+                    slider.mm.dragging = true;
+                    slider.mm.savedTarget = targetIndex;
                 }
                 methods.animateToTarget(targetIndex);
                 methods.log("unicornslider animate to " + targetIndex);
