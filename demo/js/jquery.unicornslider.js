@@ -78,7 +78,8 @@
                     swipeTreshold: 100,
                     allowedTime: 300,
                     dragging: false,
-                    wasDragged: false
+                    wasDragged: false,
+                    savedTarget: ''
                 };
                 // setup html
                 methods.setup();
@@ -253,6 +254,7 @@
                 // trying to animate to same id -> do nothing
                 if (delta === 0) {
                     slider.animating = false;
+                    methods.cleanUp();
                     return true;
                 }
                 if ((slider.centerActive === "on") || (slider.mode === "mobile" && slider.centerActive === "mobile") || (slider.mode === "desktop" && slider.centerActive === "desktop")) { // if centerActive is enabled
@@ -644,10 +646,14 @@
                 slider.off("keydown", methods.keydownHandler);
                 next.off("click", methods.next);
                 prev.off("click", methods.prev);
-                item.off("click touchstart", methods.activate);
-                viewport.off("touchstart", methods.touchStart);
-                viewport.off("touchmove", methods.touchMove);
-                viewport.off("touchend", methods.touchEnd);
+                if (slider.touchEnabled === true) {
+                    item.off("click touchstart touchend", methods.activate);
+                    viewport.off("touchstart", methods.touchStart);
+                    viewport.off("touchmove", methods.touchMove);
+                    viewport.off("touchend", methods.touchEnd);
+                } else {
+                    item.off("click", methods.activate);
+                }
                 $(window).off("resize orientationchange focus", methods.resize);
             },
             registerEventHandlers: function () {
@@ -656,13 +662,14 @@
                 // next and prev buttons
                 next.on("click", methods.next);
                 prev.on("click", methods.prev);
-                // active item centering
-                item.on("click touchstart touchend", methods.activate);
                 // touch events
                 if (slider.touchEnabled === true) {
+                    item.on("click touchstart touchend", methods.activate);
                     viewport.on("touchstart", methods.touchStart);
                     viewport.on("touchmove", methods.touchMove);
                     viewport.on("touchend", methods.touchEnd);
+                } else {
+                    item.on("click", methods.activate); // active item centering
                 }
                 // resize events
                 $(window).on("resize orientationchange focus", methods.resize);
@@ -808,7 +815,7 @@
                 } else {
                     var touch = event.originalEvent.touches[0] || event.originalEvent.changedTouches[0];
                 }
-                event.preventDefault();
+                slider.animating = true;
                 slider.mm.startX = touch.pageX;
                 slider.mm.startY = touch.pageY;
                 slider.mm.startTime = new Date().getTime();
@@ -825,9 +832,6 @@
                 }
             },
             touchMove: function (event) {
-                if(slider.animating === true) {
-                    return true;
-                }
                 if (event.originalEvent.touches === undefined) {
                     var touch = event;
                 } else {
@@ -861,19 +865,15 @@
                 }
             },
             touchEnd: function (event) {
-                if(slider.animating === true) {
-                    return true;
-                }
                 if (event.originalEvent.touches === undefined) {
                     var touch = event;
                 } else {
                     var touch = event.originalEvent.touches[0] || event.originalEvent.changedTouches[0];
                 }
-                event.preventDefault();
+                slider.animating = false;
                 slider.mm.endX = touch.pageX - slider.mm.startX;
                 slider.mm.endY = touch.pageY - slider.mm.startY;
                 slider.mm.endTime = new Date().getTime() - slider.mm.startTime;
-                slider.mm.wasDragged = true;
                 slider.mm.dragging = false;
                 // enable css animtion of wrapper
                 if ((slider.vars.speed !== 0) && (slider.animationMethod === "css") && (slider.touchEnabled === true)) {
@@ -894,32 +894,47 @@
                     }
                 }
                 if (slider.mm.endTime > slider.mm.allowedTime) {
+                    slider.mm.wasDragged = true;
                     // calculate threshold to animate to item
                     if (slider.vars.orientation === "vertical") {
                         var numberOfItems = Math.round(Math.abs(slider.mm.endY) / slider.activeItemHeight);
                         if (slider.mm.endY < -slider.mm.swipeTreshold) {
                             slider.direction = "next";
                             methods.animateToTarget(slider.current + numberOfItems);
+                            var thisItem = wrapper.find("li[data-index=" + (slider.current + numberOfItems) + "]").not(".clone").find("> *");
+                            thisItem.trigger('click');
                         }
                         else if (slider.mm.endY > slider.mm.swipeTreshold) {
                             slider.direction = "prev";
                             methods.animateToTarget(slider.current - numberOfItems);
+                            var thisItem = wrapper.find("li[data-index=" + (slider.current - numberOfItems) + "]").not(".clone").find("> *");
+                            thisItem.trigger('click');
                         }
                     } else {
                         var numberOfItems = Math.round(Math.abs(slider.mm.endX) / slider.activeItemWidth);
                         if (slider.mm.endX < -slider.mm.swipeTreshold) {
                             slider.direction = "next";
                             methods.animateToTarget(slider.current + numberOfItems);
+                            var thisItem = wrapper.find("li[data-index=" + (slider.current + numberOfItems) + "]").not(".clone").find("> *");
+                            thisItem.trigger('click');
                         } else if (slider.mm.endX > slider.mm.swipeTreshold) {
                             slider.direction = "prev";
                             methods.animateToTarget(slider.current - numberOfItems);
+                            var thisItem = wrapper.find("li[data-index=" + (slider.current - numberOfItems) + "]").not(".clone").find("> *");
+                            thisItem.trigger('click');
                         }
                     }
                 } else {
+                    slider.mm.wasDragged = false;
                     if (slider.mm.savedTarget !== '') {
                         methods.animateToTarget(slider.mm.savedTarget);
+                        var thisItem = wrapper.find("li[data-index=" + slider.mm.savedTarget + "]").not(".clone").find("> *");
+                        thisItem.trigger('click');
+                    } else {
+                        methods.cleanUp();
                     }
                 }
+                
             },
             setup: function () {
                 // save clone in var
@@ -952,7 +967,7 @@
                 // append old cloned version
                 slider.oldHtml.insertAfter(slider);
                 // unregisterEventHandlers
-                slider.methods.unregisterEventHandlers();
+                methods.unregisterEventHandlers();
                 // remove data
                 slider.removeData('unicornslider');
                 // remove original version  
@@ -963,6 +978,7 @@
                 slider.vars.destroyed(slider);
             },
             activate: function (event) {
+                
                 var target = $(event.target).closest("." + namespace + "item[data-index]");
                 var targetIndex = parseInt(target.attr("data-index"), 10);
                 if (targetIndex === slider.current) { // click on active item -> do nothing
