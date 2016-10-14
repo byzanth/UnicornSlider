@@ -153,12 +153,17 @@ ul.toggle li:last-of-type {
     border-bottom-right-radius: 10px;
 }
 
+table th, table td {
+    text-align: left;
+    vertical-align: top;
+}
+
 code {
     padding: 0;
     padding-top: 0.2em;
     padding-bottom: 0.2em;
     margin: 0;
-    font-size: 85%;
+    font-size: 100%;
     background-color: rgba(0,0,0,0.04);
     border-radius: 3px;
 }
@@ -189,11 +194,12 @@ code:after {
     }
     h3.nav-header {
         text-align: left;
+        
+    }
+    .header h3.nav-header {
         width: 200px;
     }
 }
-
-
 
 .unicorn-a {
     display: block;

@@ -79,7 +79,8 @@
                     allowedTime: 300,
                     dragging: false,
                     wasDragged: false,
-                    savedTarget: ''
+                    savedTarget: '',
+                    nextCurrent: slider.vars.startFrom
                 };
                 // setup html
                 methods.setup();
@@ -115,29 +116,56 @@
             getActiveItem: function () {
                 return item.siblings(".active");
             },
+            areClonesNeeded: function (direction) {
+                var maxSlide = slider.itemsVisible + 1, viewportSize, itemNumberPrev = 0, itemNumberNext = 0;
+                if (slider.vars.orientation === "vertical") {
+                    viewportSize = slider.viewportHeight;
+                } else {
+                    viewportSize = slider.viewportWidth;
+                }
+                for (var property in slider.items) {
+                    if (slider.items.hasOwnProperty(property)) {
+                        if (slider.items[property].displacement >= viewportSize) {
+                            itemNumberNext = itemNumberNext + 1;
+                        }
+                        if (slider.items[property].displacement < 0) {
+                            itemNumberPrev = itemNumberPrev + 1;
+                        }
+                    }
+                }
+                if(direction === "prev") {
+                    return itemNumberPrev < maxSlide;
+                } else {
+                    return itemNumberNext < maxSlide;
+                }
+            },
             getClones: function () {
                 return slider.find("." + namespace + "item.clone");
             },
             createClones: function () {
                 if (slider.cleanup === false) { // clones allready exist
-                    $(item.get().reverse()).each(function (index) {
-                        if (slider.vars.orientation === "vertical") {
-                            var cloneDisplacement = parseInt($(this).css("top"), 10); // get displacement top
-                            $(this).clone().css("top", cloneDisplacement - slider.wrapperHeight).addClass("clone").prependTo($("." + namespace + "wrapper", slider)); // prepend clone
-                        } else {
-                            var cloneDisplacement = parseInt($(this).css("left"), 10); // get displacement left
-                            $(this).clone().css("left", cloneDisplacement - slider.wrapperWidth).addClass("clone").prependTo($("." + namespace + "wrapper", slider)); // prepend clone
-                        }
-                    });
-                    item.each(function (index) {
-                        if (slider.vars.orientation === "vertical") {
-                            var cloneDisplacement = parseInt($(this).css("top"), 10); // get displacement top
-                            $(this).clone().css("top", cloneDisplacement + slider.wrapperHeight).addClass("clone").appendTo($("." + namespace + "wrapper", slider)); // append clone
-                        } else {
-                            var cloneDisplacement = parseInt($(this).css("left"), 10); // get displacement left
-                            $(this).clone().css("left", cloneDisplacement + slider.wrapperWidth).addClass("clone").appendTo($("." + namespace + "wrapper", slider)); // append clone
-                        }
-                    });
+                    if (methods.areClonesNeeded("prev")) {
+                        $(item.get().reverse()).each(function (index) {
+                            if (slider.vars.orientation === "vertical") {
+                                var cloneDisplacement = parseInt($(this).css("top"), 10); // get displacement top
+                                $(this).clone().css("top", cloneDisplacement - slider.wrapperHeight).addClass("clone").prependTo($("." + namespace + "wrapper", slider)); // prepend clone
+                            } else {
+                                var cloneDisplacement = parseInt($(this).css("left"), 10); // get displacement left
+                                $(this).clone().css("left", cloneDisplacement - slider.wrapperWidth).addClass("clone").prependTo($("." + namespace + "wrapper", slider)); // prepend clone
+                            }
+                        });
+                    }
+                    if (methods.areClonesNeeded("next")) {
+                        item.each(function (index) {
+                            if (slider.vars.orientation === "vertical") {
+                                var cloneDisplacement = parseInt($(this).css("top"), 10); // get displacement top
+                                $(this).clone().css("top", cloneDisplacement + slider.wrapperHeight).addClass("clone").appendTo($("." + namespace + "wrapper", slider)); // append clone
+                            } else {
+                                var cloneDisplacement = parseInt($(this).css("left"), 10); // get displacement left
+                                $(this).clone().css("left", cloneDisplacement + slider.wrapperWidth).addClass("clone").appendTo($("." + namespace + "wrapper", slider)); // append clone
+                            }
+                        });
+                    }
                     slider.cleanup = true;
                 }
             },
@@ -195,7 +223,7 @@
                     if (slider.animationMethod === "css") {
                         wrapper.css("-webkit-transition-duration", "").css("-moz-transition-duration", "").css("-o-transition-duration", "").css("transition-duration", "");
                     }
-                    slider.mm.wasDragged = false;
+                    methods.resize();
                     // log: UnicornSlider animation ended  
                     methods.log("unicornslider animation ended");
                     // UnicornSlider: animationEnd() Callback
@@ -321,10 +349,12 @@
                         });
                     }
                 }
-                if ((slider.centerActive === "on") || (slider.mode === "mobile" && slider.centerActive === "mobile") || (slider.mode === "desktop" && slider.centerActive === "desktop")) { // if centerActive is enabled
-                    // set selected item active
-                    methods.setActive(target);
-                }
+                if (slider.mm.wasDragged === true) {
+                    slider.mm.wasDragged = false;
+                    slider.current = slider.mm.nextCurrent; // get next current element and set it before calling resize!
+                } 
+                // set active
+                methods.setActive(target);
                 // manage button visibility
                 methods.manageButtonVisibility();
             },
@@ -335,10 +365,11 @@
                 } else if (itemIndex < 0) {
                     itemIndex = itemIndex + item.length;
                 }
-                // update current
-                slider.current = itemIndex;
-                // mark active item as active
-                item.siblings("." + namespace + "item[data-index=" + itemIndex + "]").addClass("active");
+                 slider.current = itemIndex;
+                if ((slider.centerActive === "on") || (slider.mode === "mobile" && slider.centerActive === "mobile") || (slider.mode === "desktop" && slider.centerActive === "desktop")) { // if centerActive is enabled
+                    // mark active item as active
+                    item.siblings("." + namespace + "item[data-index=" + itemIndex + "]").addClass("active");
+                }
             },
             clearActive: function () {
                 item.removeClass("active"); // remove previous active states
@@ -893,48 +924,58 @@
                         wrapper.animate({"margin-left": 0}, slider.vars.speed, slider.vars.easing, function () {}); // animate wrapper
                     }
                 }
-                if (slider.mm.endTime > slider.mm.allowedTime) {
-                    slider.mm.wasDragged = true;
-                    // calculate threshold to animate to item
-                    if (slider.vars.orientation === "vertical") {
-                        var numberOfItems = Math.round(Math.abs(slider.mm.endY) / slider.activeItemHeight);
-                        if (slider.mm.endY < -slider.mm.swipeTreshold) {
-                            slider.direction = "next";
-                            methods.animateToTarget(slider.current + numberOfItems);
-                            var thisItem = wrapper.find("li[data-index=" + (slider.current + numberOfItems) + "]").not(".clone").find("> *");
-                            thisItem.trigger('click');
-                        }
-                        else if (slider.mm.endY > slider.mm.swipeTreshold) {
-                            slider.direction = "prev";
-                            methods.animateToTarget(slider.current - numberOfItems);
-                            var thisItem = wrapper.find("li[data-index=" + (slider.current - numberOfItems) + "]").not(".clone").find("> *");
-                            thisItem.trigger('click');
-                        }
+                // calculate threshold to animate to item
+                if (slider.vars.orientation === "vertical") {
+                    var numberOfItems = Math.round(Math.abs(slider.mm.endY) / slider.activeItemHeight);
+                    if (slider.mm.endY < -slider.mm.swipeTreshold) {
+                        slider.mm.wasDragged = true;
+                        slider.mm.nextCurrent = slider.current + numberOfItems;
+                        slider.direction = "next";
+                        methods.animateToTarget(slider.mm.nextCurrent);
+                        var thisItem = wrapper.find("li[data-index=" + (slider.current + numberOfItems) + "]").not(".clone").find("> *");
+                    } else if (slider.mm.endY > slider.mm.swipeTreshold) {
+                        slider.mm.wasDragged = true;
+                        slider.mm.nextCurrent = slider.current - numberOfItems;
+                        slider.direction = "prev";
+                        methods.animateToTarget(slider.mm.nextCurrent);
+                        var thisItem = wrapper.find("li[data-index=" + (slider.current - numberOfItems) + "]").not(".clone").find("> *");
                     } else {
-                        var numberOfItems = Math.round(Math.abs(slider.mm.endX) / slider.activeItemWidth);
-                        if (slider.mm.endX < -slider.mm.swipeTreshold) {
-                            slider.direction = "next";
-                            methods.animateToTarget(slider.current + numberOfItems);
-                            var thisItem = wrapper.find("li[data-index=" + (slider.current + numberOfItems) + "]").not(".clone").find("> *");
+                        slider.mm.wasDragged = false;
+                        slider.mm.nextCurrent = slider.current;
+                        if (slider.mm.savedTarget !== '') {
+                            methods.animateToTarget(slider.mm.savedTarget);
+                            var thisItem = wrapper.find("li[data-index=" + slider.mm.savedTarget + "]").not(".clone").find("> *");
                             thisItem.trigger('click');
-                        } else if (slider.mm.endX > slider.mm.swipeTreshold) {
-                            slider.direction = "prev";
-                            methods.animateToTarget(slider.current - numberOfItems);
-                            var thisItem = wrapper.find("li[data-index=" + (slider.current - numberOfItems) + "]").not(".clone").find("> *");
-                            thisItem.trigger('click');
+                        } else {
+                            methods.cleanUp();
                         }
                     }
                 } else {
-                    slider.mm.wasDragged = false;
-                    if (slider.mm.savedTarget !== '') {
-                        methods.animateToTarget(slider.mm.savedTarget);
-                        var thisItem = wrapper.find("li[data-index=" + slider.mm.savedTarget + "]").not(".clone").find("> *");
-                        thisItem.trigger('click');
+                    var numberOfItems = Math.round(Math.abs(slider.mm.endX) / slider.activeItemWidth);
+                    if (slider.mm.endX < -slider.mm.swipeTreshold) {
+                        slider.mm.wasDragged = true;
+                        slider.mm.nextCurrent = slider.current + numberOfItems;
+                        slider.direction = "next";
+                        methods.animateToTarget(slider.mm.nextCurrent);
+                        var thisItem = wrapper.find("li[data-index=" + (slider.current + numberOfItems) + "]").not(".clone").find("> *");
+                    } else if (slider.mm.endX > slider.mm.swipeTreshold) {
+                        slider.mm.wasDragged = true;
+                        slider.mm.nextCurrent = slider.current - numberOfItems;
+                        slider.direction = "prev";
+                        methods.animateToTarget(slider.mm.nextCurrent);
+                        var thisItem = wrapper.find("li[data-index=" + (slider.current - numberOfItems) + "]").not(".clone").find("> *");
                     } else {
-                        methods.cleanUp();
+                        slider.mm.wasDragged = false;
+                        slider.mm.nextCurrent = slider.current;
+                        if (slider.mm.savedTarget !== '') {
+                            methods.animateToTarget(slider.mm.savedTarget);
+                            var thisItem = wrapper.find("li[data-index=" + slider.mm.savedTarget + "]").not(".clone").find("> *");
+                            thisItem.trigger('click');
+                        } else {
+                            methods.cleanUp();
+                        }
                     }
                 }
-                
             },
             setup: function () {
                 // save clone in var
