@@ -1,4 +1,4 @@
-# unicornslider 1.0.0
+# unicornslider 1.0.1
 http://unicornslider.sagaverse.com/ - Copyright (c) 2016 Nils Kreutzer
 
 ## Features
