@@ -1,6 +1,6 @@
 {
   "name": "jquery-unicornslider",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An awesome, fully adaptive jQuery slider plugin",
   "main": "jquery.unicornslider.js",
   "scripts": {
