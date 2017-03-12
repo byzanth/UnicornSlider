@@ -1,5 +1,5 @@
 {
-  "name": "UnicornSlider",
+  "name": "jquery-unicornslider",
   "version": "1.0.0",
   "description": "An awesome, fully adaptive jQuery slider plugin",
   "main": "jquery.unicornslider.js",
@@ -8,11 +8,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/byzanth/UnicornSlider.git"
+    "url": "https://github.com/byzanth/UnicornSlider.git"
   },
   "keywords": [
-    "unicornslider",
-    "jquery",
+    "unicorn",
+    "jquery-plugin",
     "slider"
   ],
   "author": "Nils Kreutzer <nilkreutzer@hotmail.com>",
@@ -21,9 +21,6 @@
     "url": "https://github.com/byzanth/UnicornSlider/issues"
   },
   "homepage": "https://github.com/byzanth/UnicornSlider#readme",
-  "dependencies": {
-    "jquery": ">=1.7"
-  },
   "devDependencies": {
     "grunt": "^1.0.1",
     "grunt-cli": "^1.2.0",
