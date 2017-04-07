@@ -85,3 +85,6 @@ Callback function that fires on animation ended
 
 ### destroyed
 Callback function that fires on slider destroyed
+
+## tipps:
+To destroy an active slider at runtime, use $(".unicornslider").data("unicornslider").unicornslider("destroy")
