@@ -1,5 +1,6 @@
 # unicornslider 1.0.1
 http://unicornslider.sagaverse.com/ - Copyright (c) 2016 Nils Kreutzer
+[Demo](https://byzanth.github.io/UnicornSlider/demo)
 
 ## Features
 - an awesome, fully adaptive jQuery slider plugin perfectly suited for sliding menus
