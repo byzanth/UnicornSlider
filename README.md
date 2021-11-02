@@ -1,6 +1,5 @@
 # unicornslider 1.0.1
-http://unicornslider.sagaverse.com/ - Copyright (c) 2016 Nils Kreutzer
-- view [Demo](https://byzanth.github.io/UnicornSlider/demo)
+[Demo](https://byzanth.github.io/UnicornSlider/demo) - Copyright (c) 2016 Nils Kreutzer
 
 ## Features
 - an awesome, fully adaptive jQuery slider plugin perfectly suited for sliding menus
@@ -22,9 +21,9 @@ The `master` branch of this repository is always the latest development version 
 UnicornSlider is open source under the [MIT License](https://github.com/byzanth/UnicornSlider/blob/master/LICENSE)
 
 ## Examples
-- [Basic Slider](http://unicornslider.sagaverse.com/index.html)
-- [Vertical Slider](http://unicornslider.sagaverse.com/basic-slider-vertical.html)
-- [Documentation](http://unicornslider.sagaverse.com/documentation.html)
+- [Basic Slider](https://byzanth.github.io/UnicornSlider/demo/index.html)
+- [Vertical Slider](https://byzanth.github.io/UnicornSlider/demo/basic-slider-vertical.html)
+- [Documentation](https://byzanth.github.io/UnicornSlider/demo/documentation.html)
 
 ## Properties
 ### debug:
